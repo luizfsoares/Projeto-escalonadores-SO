@@ -5,6 +5,11 @@
  */
 package escalonadores;
 import escalonadores.Processo;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.Scanner;
 /**
  *
@@ -21,6 +26,7 @@ public class Escalonadores {
         static double tempEspM = 0;
         static double tempRetM = 0;
         static double tempRespM = 0;
+        static int numProcMortos = 0;
         
 
     /**
@@ -28,38 +34,6 @@ public class Escalonadores {
      */
     public static void escalonadorFIFO(Processo[] processos){
         
-       /* // TODO code application logic here
-        System.out.print("Quantos processos?");
-        Scanner sc1 = new Scanner(System.in);
-        Scanner sc2 = new Scanner(System.in);
-        numProc = sc1.nextInt();
-        System.out.println(numProc);
-        //Processo[] processos = new Processo[numProc];
-        
-        for (int i = 0; i < numProc; i ++){
-            processos[i] = new Processo();
-            input = sc2.nextLine();
-            textoseparado = input.split(" ");
-            chegada = textoseparado[0];
-            pico = textoseparado[1];
-            processos[i].setTempChegada(Integer.valueOf(chegada));
-            processos[i].setTempPico(Integer.valueOf(pico));
-        }
-        
-        for (int i = 1; i <= numProc; i++){  // pegar o primeiro tempo de chegada
-            if((processos[0].getTempChegada()) < (processos[i].getTempChegada())){
-                relogio = processos[0].getTempChegada();
-            }
-            else{
-                relogio = processos[i].getTempChegada();
-            }
-        }
-        
-        System.out.println(relogio); */
-
-
-
-
         //ORDENAÇÃO DO ARRAY COM INSERTION SORT
         int aux,aux2;
         int j;
@@ -101,6 +75,7 @@ public class Escalonadores {
     }
      
         //CALCULO DAS MEDIAS DOS TEMPOS
+        DecimalFormat df = new DecimalFormat("#.0");
         for (int i = 0; i < numProc; i++){
             soma += processos[i].getTempResposta();
             //System.out.println("Tempo de Resposta " + " = " + processos[i].getTempResposta());
@@ -122,7 +97,7 @@ public class Escalonadores {
         tempRetM = soma/numProc;
         
         
-        System.out.println("FCFS " + tempRetM + " " + tempRespM + " " + tempEspM);
+        System.out.println("FCFS " + df.format(tempRetM) + " " + df.format(tempRespM) + " " + df.format(tempEspM));
         }
         
         
@@ -138,24 +113,7 @@ public class Escalonadores {
     
     public static void escalonadorSJF(Processo[] processos){
     
-        /*System.out.print("Quantos processos?");
-        Scanner sc1 = new Scanner(System.in);
-        Scanner sc2 = new Scanner(System.in);
-        numProc = sc1.nextInt();
-        System.out.println(numProc);
-        //Processo[] processos = new Processo[numProc];
-        
-        for (int i = 0; i < numProc; i ++){
-            processos[i] = new Processo();
-            input = sc2.nextLine();
-            textoseparado = input.split(" ");
-            chegada = textoseparado[0];
-            pico = textoseparado[1];
-            processos[i].setTempChegada(Integer.valueOf(chegada));
-            processos[i].setTempPico(Integer.valueOf(pico));
-        }*/
-        
-        //ORDENAÇÃO DO ARRAY TEMPO DE CHEGADA COM INSERTION SORT
+
             int aux,aux2;
             int j;
         for (int i = 1; i < numProc; i++){
@@ -213,8 +171,8 @@ public class Escalonadores {
             processos[i].setTempRetorno(relogio - processos[i].getTempChegada());
     }
         
-        
-        
+        DecimalFormat df = new DecimalFormat("#.0");
+        soma = 0;
         //CALCULO DAS MEDIAS DOS TEMPOS
         for (int i = 0; i < numProc; i++){
             soma += processos[i].getTempResposta();
@@ -235,41 +193,95 @@ public class Escalonadores {
             //System.out.println("Tempo de Retorno " + " = " + processos[i].getTempRetorno());
         }
         tempRetM = soma/numProc;
+        soma = 4;
         
         
-        System.out.println("SJF " + tempRetM + " " + tempRespM + " " + tempEspM);
+        System.out.println("SJF " + df.format(tempRetM) + " " + df.format(tempRespM) + " " + df.format(tempEspM));
         }
     
     
     
     public static void escalonadorRR(Processo[] processos){
         
-        //ORDENAÇÃO POR TEMPO DE CHEGADA COM INSERTION SORT
-        int aux,aux2;
+        //NAO PRECISA DE ORDENAÇÃO PQ É COM QUANTUM
+        DecimalFormat df = new DecimalFormat("#.0");
         int j;
-        int quantum = 4;
-        for (int i = 1; i < numProc; i++){
-            
-            aux = processos[i].getTempChegada();
-            aux2 = processos[i].getTempPico();
-            
-        for (j = i - 1; (j >= 0) && (processos[j].getTempChegada() > aux); j--){
+        double somaRR = 0;
+        int quantum = 2;
+        ArrayList<Processo> filadepronto = new ArrayList<Processo>();
+        ArrayList<Processo> pmortos = new ArrayList<Processo>();
+        Processo executando = new Processo();
                 
-            processos[j+1].setTempChegada(processos[j].getTempChegada());
-            processos[j+1].setTempPico(processos[j].getTempPico());
-       }
-        processos[j+1].setTempChegada(aux);
-        processos[j+1].setTempPico(aux2);
-    }
-        for (int i = 0; i < numProc; i++){
-           System.out.println(processos[i].getTempPico());
-           System.out.println(processos[i].getTempChegada());
+        
+        //verificando se algum processo chegou
+        int relogio = processos[0].getTempChegada();
+ 
+   while (pmortos.size() != numProc){
+            
+            for (int i = 0; i < numProc; i ++){
+                if (processos[i].getTempChegada() <= relogio && processos[i].getisHere() == false){
+                    filadepronto.add(processos[i]);
+                    processos[i].setIsHere(true);
+                }
+               }
+            //teste da fila rr pré calculo
+                        /*for (int i = 0; i < filadepronto.size(); i++){
+                       System.out.println("Tempo de Pico P"+i+ " = " +filadepronto.get(i).getTempPico());
+                       filadepronto.get(i).setTempEspera(filadepronto.get(i).getTempEspera() + quantum);
+                
+            }*/
+               if(!filadepronto.isEmpty()){
+               executando = filadepronto.get(0);//cabeça da fila de pronto 
+               
+               //tempo de pico maior que quantum tira quantum
+               if(executando.getTempPico() > quantum){
+                   relogio += quantum;
+                   executando.setTempPico(executando.getTempPico() - quantum);
+                   //executando.setTempEspera(executando.getTempEspera() + quantum);
+                   for (int i = 0; i < numProc; i ++){
+                        if (processos[i].getTempChegada() <= relogio && processos[i].getisHere() == false){
+                            filadepronto.add(processos[i]);
+                            processos[i].setIsHere(true);
+                }
+               }
+                   filadepronto.add(executando);
+                   filadepronto.remove(0);
+                   //System.out.println("Tempo Atual = " +relogio);
+                   //System.out.println(filadepronto.size());
+                   
+
+               }
+               //tempo de píco menor que quantum tira tempo que pico que restou
+               else{
+                   relogio += executando.getTempPico();                
+                   //ATUALIZANDO O TEMPO DE RETORNO NA FILA DE MORTOS
+                   for(int i = 0; i < filadepronto.size();i++){
+                       filadepronto.get(i).setTempRetorno(relogio - filadepronto.get(i).getTempChegada());
+                   }
+                   filadepronto.remove(0);
+                   //System.out.println("morri");
+                   //System.out.println(relogio); // AQUI É O TEMPO DE RETORNO
+                   pmortos.add(executando);
+                   
+                   //numProc--;
+               }
+              }
+
         }
+
+   //tempo de retorno
+   for (int i = 0; i < pmortos.size(); i ++){
+       soma += pmortos.get(i).getTempRetorno();
+   }
+   tempRetM = soma/numProc;
+   
+        
+        
+        System.out.println("RR " + df.format(tempRetM));
+        
     
     }
 
-    
-        
         
     
     public static void main(String[] args) {
@@ -277,7 +289,7 @@ public class Escalonadores {
         Scanner sc1 = new Scanner(System.in);
         Scanner sc2 = new Scanner(System.in);
         numProc = sc1.nextInt();
-        System.out.println(numProc);
+        //System.out.println(numProc);
         Processo[] processos = new Processo[numProc];
         
         for (int i = 0; i < numProc; i ++){
@@ -289,11 +301,13 @@ public class Escalonadores {
             processos[i].setTempChegada(Integer.valueOf(chegada));
             processos[i].setTempPico(Integer.valueOf(pico));
         }
-        //escalonadorFIFO(processos);
-        //escalonadorSJF(processos);
+        escalonadorFIFO(processos);
+        escalonadorSJF(processos);
         escalonadorRR(processos);
     }
-    
+       
+     
 }
-    
+
+
 

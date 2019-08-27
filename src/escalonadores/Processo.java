@@ -15,6 +15,15 @@ public class Processo {
     private int tempResposta;  // lembrar de calcular o tempo medio que é a media dos tempos
     private int tempRetorno;   // lembrar de calcular o tempo medio que é a media dos tempos
     private int tempEspera;    // lembrar de calcular o tempo medio que é a media dos tempos
+    private boolean isHere = false;
+
+    public boolean getisHere() {
+        return isHere;
+    }
+
+    public void setIsHere(boolean isHere) {
+        this.isHere = isHere;
+    }
 
     public int getTempChegada() {
         return tempChegada;
